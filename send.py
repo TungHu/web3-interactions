@@ -3,6 +3,51 @@ from web3 import Web3
 from eth_account import Account
 import time
 
+UNISWAP_V2_ROUTER_ABI = [
+    {
+        "constant": False,
+        "inputs": [
+            {"name": "amountIn", "type": "uint256"},
+            {"name": "amountOutMin", "type": "uint256"},
+            {"name": "path", "type": "address[]"},
+            {"name": "to", "type": "address"},
+            {"name": "deadline", "type": "uint256"}
+        ],
+        "name": "swapExactTokensForTokens",
+        "outputs": [{"name": "amounts", "type": "uint256[]"}],
+        "payable": False,
+        "stateMutability": "nonpayable",
+        "type": "function"
+    }
+]
+
+CHAINS = {
+    'ethereum': {
+        'name': 'Ethereum',
+        'rpc_url': 'https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID',
+        'chain_id': 1,
+        'router_address': '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f'  # Uniswap V2 Router
+    },
+    'bsc': {
+        'name': 'Binance Smart Chain',
+        'rpc_url': 'https://bsc-dataseed.binance.org/',
+        'chain_id': 56,
+        'router_address': '0x10ED43C718714eb63d5aA57B78B54704E256024E'  # PancakeSwap V2 Router
+    },
+    'polygon': {
+        'name': 'Polygon',
+        'rpc_url': 'https://polygon-rpc.com/',
+        'chain_id': 137,
+        'router_address': '0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff'  # QuickSwap Router
+    },
+    'arbitrum': {
+        'name': 'Arbitrum',
+        'rpc_url': 'https://arb1.arbitrum.io/rpc',
+        'chain_id': 42161,
+        'router_address': '0x1b02da8cb0d097eb8d57a175b88c7d8b47997506'  # SushiSwap Router
+    }
+}
+
 def wait_for_transaction_receipt(web3, txn_hash, timeout=120):
    
     #txn_hash = Web3.to_bytes(hexstr=txn_hash)
@@ -335,3 +380,151 @@ def write_to_file(file_path, content):
 def read_file_to_list(file_path):
     with open(file_path, 'r') as file:
         return [line.strip() for line in file]
+    
+def swap_token(seed, token_in, token_out, chain_info):
+    
+    web3 = Web3(Web3.HTTPProvider(chain_info['rpc_url']))
+    if not web3.is_connected():
+        raise ConnectionError(f"Không thể kết nối tới {chain_info['name']}")
+
+    Account.enable_unaudited_hdwallet_features()
+    account = Account.from_mnemonic(seed)
+
+    # Địa chỉ router tương ứng với chain
+    uniswap_router_address = Web3.to_checksum_address(chain_info['router_address'])
+    uniswap_router = web3.eth.contract(address=uniswap_router_address, abi=UNISWAP_V2_ROUTER_ABI)
+
+    token_in_address = Web3.to_checksum_address(token_in)
+    token_out_address = Web3.to_checksum_address(token_out)
+    path = [token_in_address, token_out_address]
+
+    # Lấy số lượng token_in tối đa
+    token_contract = web3.eth.contract(address=token_in_address, abi=UNISWAP_V2_ROUTER_ABI)
+    amount_in_max = token_contract.functions.balanceOf(account.address).call()
+
+    if amount_in_max == 0:
+        raise ValueError("Số dư không đủ để swap")
+
+    # Xây dựng giao dịch swap
+    transaction = uniswap_router.functions.swapExactTokensForTokens(
+        amount_in_max,
+        0,  # Chấp nhận bất kỳ lượng token_out nào
+        path,
+        account.address,
+        int(time.time()) + 60  # 60 giây hết hạn
+    ).build_transaction({
+        'from': account.address,
+        'gasPrice': web3.eth.gas_price,
+        'nonce': web3.eth.get_transaction_count(account.address),
+        'chainId': chain_info['chain_id']
+    })
+
+    # Ký và gửi giao dịch
+    signed_txn = web3.eth.account.sign_transaction(transaction, account.key)
+    txn_hash = web3.eth.send_raw_transaction(signed_txn.raw_transaction)
+
+    return txn_hash.hex()
+''' 
+seed = "YOUR_MNEMONIC"
+token_in = "0x6B175474E89094C44Da98b954EedeAC495271d0F"  # DAI
+token_out = "0xC02aaA39b223FE8D0A0E5C4F27eAD9083C756Cc2"  # WETH
+
+# Swap trên Arbitrum
+txn_hash = swap_token(seed, token_in, token_out, CHAINS['arbitrum'])
+print(f"Giao dịch swap đã gửi trên Arbitrum: {txn_hash}")
+
+# Swap trên Binance Smart Chain
+txn_hash = swap_token(seed, token_in, token_out, CHAINS['bsc'])
+print(f"Giao dịch swap đã gửi trên BSC: {txn_hash}")
+'''
+
+def send_funds(seed, recipient_address, chain_info, token_address=None):
+
+    web3 = Web3(Web3.HTTPProvider(chain_info['rpc_url']))
+    
+    if not web3.is_connected():
+        raise ConnectionError(f"Không thể kết nối tới {chain_info['name']}")
+
+    Account.enable_unaudited_hdwallet_features()
+    account = Account.from_mnemonic(seed)
+
+    if token_address:
+        # Gửi token ERC-20
+        token_contract_address = Web3.to_checksum_address(token_address)
+        erc20_abi = [
+            {
+                "constant": False,
+                "inputs": [{"name": "_to", "type": "address"}, {"name": "_value", "type": "uint256"}],
+                "name": "transfer",
+                "outputs": [{"name": "", "type": "bool"}],
+                "type": "function"
+            },
+            {
+                "constant": True,
+                "inputs": [{"name": "_owner", "type": "address"}],
+                "name": "balanceOf",
+                "outputs": [{"name": "balance", "type": "uint256"}],
+                "type": "function"
+            }
+        ]
+
+        token_contract = web3.eth.contract(address=token_contract_address, abi=erc20_abi)
+        balance = token_contract.functions.balanceOf(account.address).call()
+
+        if balance == 0:
+            raise ValueError("Không có đủ số dư token để thực hiện giao dịch")
+
+        amount = balance
+        gas_estimate = token_contract.functions.transfer(recipient_address, amount).estimate_gas({
+            'from': account.address
+        })
+
+        transaction = token_contract.functions.transfer(recipient_address, amount).build_transaction({
+            'gas': gas_estimate,
+            'gasPrice': web3.eth.gas_price,
+            'nonce': web3.eth.get_transaction_count(account.address),
+            'chainId': chain_info['chain_id']
+        })
+    else:
+        # Gửi native coin (ETH, BNB)
+        balance = web3.eth.get_balance(account.address)
+        #balance = 3310000000000000
+        gas_price = web3.eth.gas_price
+        
+        transaction = {
+            'to': Web3.to_checksum_address(recipient_address),
+            'value': balance,  # Giá trị sẽ được điều chỉnh sau
+            'gasPrice': gas_price,
+            'nonce': web3.eth.get_transaction_count(account.address),
+            'chainId': chain_info['chain_id']
+        }
+        gas_estimate = web3.eth.estimate_gas(transaction)
+        gas_cost = gas_estimate * gas_price
+
+        amount = balance - gas_cost
+        if amount <= 0:
+            raise ValueError("Số dư không đủ để thanh toán phí gas.")
+        
+        transaction['value'] = amount
+        transaction['gas'] = gas_estimate
+
+    signed_txn = web3.eth.account.sign_transaction(transaction, account.key)
+    txn_hash = web3.eth.send_raw_transaction(signed_txn.raw_transaction)
+
+    try:
+        receipt = wait_for_transaction_receipt(web3, txn_hash)
+    except TimeoutError as e:
+        print(str(e))
+
+    return txn_hash.hex() if not token_address else amount
+
+'''token_address = "0xTokenAddress"  # Địa chỉ token bạn muốn gửi
+
+# Gửi token trên BSC Testnet
+txn_hash = send_funds(seed, recipient, CHAINS['bsc'], token_address=token_address)
+print(f"Giao dịch gửi token: {txn_hash}")
+
+# Gửi token trên Arbitrum
+txn_hash = send_funds(seed, recipient, CHAINS['arbitrum'], token_address=token_address)
+print(f"Giao dịch gửi token: {txn_hash}")
+'''
