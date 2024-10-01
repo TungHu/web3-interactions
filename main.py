@@ -1,5 +1,5 @@
 ﻿from xml.etree.ElementTree import tostring
-from send import CHAINS, bsc_sendBnb, bsc_sendToken, read_file_to_list, send_funds, write_to_file, bsc_sendBnb_testnet,bsc_sendToken_testnet
+from send import CHAINS, bsc_sendBnb, bsc_sendToken, read_file_to_list, send_funds, swap_token, write_to_file, bsc_sendBnb_testnet,bsc_sendToken_testnet
 import time
 from web3 import Web3
 
@@ -7,9 +7,10 @@ seeds = read_file_to_list('seeds.txt')
 recipients = read_file_to_list('recipients.txt')
 BINANCEH = '0x8c41f0ce2dba04f6b014bae7e183b2ad9aea0c47'
 GATEH = '0x6FcD1737352905fBFEC0F3AD7375DFA0d7ECC98f'
-USDT_address = "0x55d398326f99059fF775485246999027B3197955"  # Địa chỉ hợp đồng USDT ERC-20
+USDT_bsc = "0x55d398326f99059fF775485246999027B3197955"  # Địa chỉ hợp đồng USDT ERC-20
 usdt_testnet = "0x337610d27c682E347C9cD60BD4b3b107C9d34dDd"
-Son_gom = "0x1a7B744340552C58BEF9DAC38e86fDeAeb1ee135"
+Tung_gom = "0xd75946295A3DfFB837ea276902032859576c53Be"
+SNIFT_bsc = '0x5c4625aC040486cE7A9054924B8cd3E4Ba8480a6'
 for i in range(len(seeds)):
     seed = seeds[i]
     content = str(i) + " "
@@ -22,7 +23,7 @@ for i in range(len(seeds)):
     
     time.sleep(2)
     try:
-        bsc_sendToken(seed, LOVE_gom, USDT_address)
+        bsc_sendToken(seed, LOVE_gom, USDT_bsc)
         print(f"{i} | {seed.split(" ")[0]} | USDT")
 
     except Exception as e:
@@ -34,10 +35,28 @@ for i in range(len(seeds)):
     except :
         pass
     '''
+    #txn_hash = swap_token(seed,  CHAINS['bsc'],SNIFT_bsc)
+    #print(f"Giao dịch swap đã gửi trên BSC: {txn_hash}")
 
-    # Gửi token trên BSC Testnet
-    txn_hash = send_funds(seed, Son_gom, CHAINS['bsc'])
+    # Gửi eth
+    
+    try:
+        txn_hash = send_funds(seed, Tung_gom, CHAINS['arbitrum'])
+    except Exception as e: print(e)
+
+    try:
+        time.sleep(2)
+        txn_hash = send_funds(seed, Tung_gom, CHAINS['bsc'], SNIFT_bsc)
+    except Exception as e: print(e)
+
+    
+    try:
+        time.sleep(2)
+        txn_hash = send_funds(seed, recipients[i], CHAINS['bsc'])
+    except Exception as e: print(e)
+  
     content += txn_hash
+    
     print(f"Giao dịch gửi token: {txn_hash}")
 
     write_to_file("output.txt", content )
