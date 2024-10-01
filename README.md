@@ -2,7 +2,9 @@
 web3-interactions là một công cụ được xây dựng bằng Python để tương tác với các ứng dụng Web3. Repository này cung cấp các chức năng như gửi token, kiểm tra số dư, và thực hiện các giao dịch khác trên mạng blockchain Ethereum.
 
 ## Tính năng
-- Gửi token (ETH hoặc token ERC-20) đến địa chỉ khác (BSC).
+- Gửi token (BNB hoặc token ERC-20) đến địa chỉ khác (BSC).
+- Gửi token (ETH) đến địa chỉ khác                   (ARBITRUM).
+- Swap token                                         (BSC) !!!! chú ý splitpage !!!!
 ## Yêu cầu
 - Python 3.7 trở lên
 - Visual Studio Code (hoặc IDE Python khác)
