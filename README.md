@@ -27,3 +27,16 @@ env\Scripts\activate      # Trên macOS/Linux
 ```sh
 pip install -r requirements.txt
 ```
+## Sử dụng
+1. Gửi native coin :
+txn_hash = send_funds([seed], [địa chỉ nhận], [chain info])
+
+```
+txn_hash = send_funds(seed, '0x....', CHAINS['arbitrum'])
+```
+2. Gửi token:
+txn_hash = send_funds([seed], [địa chỉ nhận], [chain info], [token address])
+```
+txn_hash = send_funds(seed, '0x....', CHAINS['arbitrum'], USDT_bsc)
+```
+## Lỗi
