@@ -11,7 +11,7 @@
     <OutputPath>.</OutputPath>
     <Name>main</Name>
     <RootNamespace>main</RootNamespace>
-    <InterpreterId>MSBuild|ref|$(MSBuildProjectFullPath)</InterpreterId>
+    <InterpreterId>MSBuild|lib|$(MSBuildProjectFullPath)</InterpreterId>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -26,20 +26,20 @@
     <Compile Include="send.py" />
   </ItemGroup>
   <ItemGroup>
-    <Interpreter Include="ref\">
-      <Id>ref</Id>
+    <Content Include="output.txt" />
+    <Content Include="recipients.txt" />
+    <Content Include="seeds.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Interpreter Include="lib\">
+      <Id>lib</Id>
       <Version>0.0</Version>
-      <Description>ref (Python 3.12 (64-bit))</Description>
+      <Description>lib (Python 3.12 (64-bit))</Description>
       <InterpreterPath>Scripts\python.exe</InterpreterPath>
       <WindowsInterpreterPath>Scripts\pythonw.exe</WindowsInterpreterPath>
       <PathEnvironmentVariable>PYTHONPATH</PathEnvironmentVariable>
       <Architecture>X64</Architecture>
     </Interpreter>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="output.txt" />
-    <Content Include="recipients.txt" />
-    <Content Include="seeds.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

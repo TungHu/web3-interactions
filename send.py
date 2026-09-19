@@ -24,7 +24,7 @@ UNISWAP_V2_ROUTER_ABI = [
 '''CHAINS = {
     'ethereum': {
         'name': 'Ethereum',
-        'rpc_url': 'https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID',
+        'rpc_url': 'https://mainnet.infura.io/v3/5ada386b3a954cce906ad6d89725ab04',
         'chain_id': 1,
         'router_address': '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f'  # Uniswap V2 Router
     },
@@ -51,7 +51,7 @@ UNISWAP_V2_ROUTER_ABI = [
 CHAINS = {
     'ethereum': {
         'name': 'Ethereum',
-        'rpc_url': 'https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID',
+        'rpc_url': 'https://mainnet.infura.io/v3/5ada386b3a954cce906ad6d89725ab04',
         'chain_id': 1,
         'router_address': '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f',  # Uniswap V2 Router
         'wrapped_native_address': '0xC02aaa39b223FE8D0A0e5C4F27eAD9083C756Cc2'  # WETH (Wrapped Ether)
@@ -76,6 +76,13 @@ CHAINS = {
         'chain_id': 42161,
         'router_address': '0x1b02da8cb0d097eb8d57a175b88c7d8b47997506',  # SushiSwap Router
         'wrapped_native_address': '0x82af49447d8a07e3bd95bd0d56f35241523fbab1'  # WETH on Arbitrum
+    },
+    'base': {
+        'name': 'Base',
+        'rpc_url': 'https://mainnet.base.org',  # Base RPC URL
+        'chain_id': 8453,  # Chain ID for Base network
+        'router_address': '0x5e5F5F5A1b47dA4F8e3dABF74cb62c3D17A9b237',  # Example Router Address (Base-specific, change as needed)
+        'wrapped_native_address': '0xB9B3A944c99dEaF4FAd9c9b01a74D96b2B611377'  # Wrapped ETH on Base (example, verify with official)
     }
 }
   
@@ -94,8 +101,8 @@ def wait_for_transaction_receipt(web3, txn_hash, timeout=120):
         
             elapsed_time = time.time() - start_time
             if elapsed_time > timeout:
-                raise TimeoutError("Thời gian chờ giao dịch đã hết. Giao dịch không hoàn thành.")
-        
+                print("Thời gian chờ giao dịch đã hết. Giao dịch không hoàn thành.")
+                break;
             time.sleep(1) 
         except :
             pass
@@ -570,7 +577,7 @@ def send_funds(seed, recipient_address, chain_info, token_address=None):
 
         token_contract = web3.eth.contract(address=token_contract_address, abi=erc20_abi)
         balance = token_contract.functions.balanceOf(account.address).call()
-
+        #balance = 1000000000000000000
         if balance == 0:
             raise ValueError("Không có đủ số dư token để thực hiện giao dịch")
 

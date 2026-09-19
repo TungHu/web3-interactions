@@ -3,3 +3,13 @@ seeds.txt
 ref
 .vs
 __pycache__
+
+# --- bo sung ---
+seed_bsx.txt
+lib/
+env/
+venv/
+.venv/
+.env
+*.pyc
+.vscode/
